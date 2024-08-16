@@ -9,6 +9,7 @@
             font-family: Arial, sans-serif;
             text-align: center;
             margin-top: 50px;
+            padding-bottom: 60px; /* Add padding to ensure footer doesn't overlap content */
         }
         .container {
             display: inline-block;
@@ -30,6 +31,16 @@
             color: #666;
             font-style: italic;
         }
+        footer {
+            background-color: #ffcc00;
+            color: #333;
+            padding: 10px;
+            text-align: center;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
@@ -45,6 +56,7 @@
             <p id="solution"></p>
         </div>
     </div> 
+
     <script>
         const SHEET_ID = '1D7Z9Ufzovzw5lP1og5XUnLE3mBZ3FDCFxqYT_O9ITyE';
         const API_KEY = 'AIzaSyDgUUIsCwafUEJRlNgNhUk35uve51bPwqU'; 
@@ -131,6 +143,23 @@
             console.log("Response from LLM:", data); // Debugging
             return data.text || "No solution generated.";
         }
+
+        // JavaScript to Handle Footer Display
+        function dismissFooter() {
+            document.getElementById('extension-warning-footer').style.display = 'none';
+            localStorage.setItem('extensionWarningFooterDismissed', 'true');
+        }
+
+        window.onload = function() {
+            if (!localStorage.getItem('extensionWarningFooterDismissed')) {
+                document.getElementById('extension-warning-footer').style.display = 'block';
+            }
+        }
     </script>
+
+    <!-- Footer Notification -->
+    <footer id="extension-warning-footer" style="display: none;">
+        You may experience issues with this site if certain browser extensions are enabled. <a href="#" style="color: #333; text-decoration: underline;" onclick="dismissFooter()">Learn more</a>
+    </footer>
 </body>
 </html>
