@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Health Innovator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        .container {
+            display: inline-block;
+            text-align: left;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+            margin-right: 10px;
+        }
+        .result {
+            margin-top: 20px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .loading, .error {
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Digital Health Innovator</h1>
+        <p>Click the buttons to generate your random challenge and technology!</p>
+        <button onclick="generateRandom('challenge')">Generate Challenge</button>
+        <button onclick="generateRandom('technology')">Generate Technology</button>
+        <button onclick="generateSolution()">Generate Solution</button>
+        <div class="result">
+            <p id="challenge"></p>
+            <p id="technology"></p>
+            <p id="solution"></p>
+        </div>
+    </div> 
+    <script>
+        const SHEET_ID = '1D7Z9Ufzovzw5lP1og5XUnLE3mBZ3FDCFxqYT_O9ITyE';
+        const API_KEY = 'AIzaSyDgUUIsCwafUEJRlNgNhUk35uve51bPwqU'; 
+        const RANGE = 'Sheet1!B2:C'; 
+
+        const LLM_API_KEY = "yiB1Lv5u.sYS6WGo9yqWYPYdRAHN5SnVduBltplVR";
+        const LLM_URL = "https://payload.vextapp.com/hook/0B0Q4KQUXE/catch/hello";
+
+        let challenges = [];
+        let technologies = [];
+        let dataFetched = false;
+
+        async function fetchFromSheet() {
+            if (dataFetched) return;
+
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${API_KEY}`;
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error('Failed to fetch data');
+            }
+            const data = await response.json();
+            
+            challenges = data.values.map(row => row[0]).filter(item => item !== "");
+            technologies = data.values.map(row => row[1]).filter(item => item !== "");
+            
+            dataFetched = true;
+        }
+
+        async function generateRandom(type) {
+            const elementId = type;
+            const element = document.getElementById(elementId);
+            element.innerHTML = '<span class="loading">Loading...</span>';
+
+            try {
+                await fetchFromSheet();
+                const items = type === 'challenge' ? challenges : technologies;
+                const randomItem = items[Math.floor(Math.random() * items.length)];
+                element.innerText = `${type.charAt(0).toUpperCase() + type.slice(1)}: ${randomItem}`;
+            } catch (error) {
+                console.error('Error:', error);
+                element.innerHTML = '<span class="error">Failed to fetch data. Please try again.</span>';
+            }
+        }
+
+        async function generateSolution() {
+            const challengeText = document.getElementById('challenge').innerText.replace('Challenge: ', '');
+            const technologyText = document.getElementById('technology').innerText.replace('Technology: ', '');
+            const solutionElement = document.getElementById('solution');
+            
+            if (!challengeText || !technologyText) {
+                solutionElement.innerHTML = '<span class="error">Please generate both a challenge and a technology first.</span>';
+                return;
+            }
+            
+            solutionElement.innerHTML = '<span class="loading">Generating solution...</span>';
+
+            try {
+                const solution = await sendToLLM(challengeText, technologyText);
+                solutionElement.innerText = `Solution: ${solution}`;
+            } catch (error) {
+                console.error('Error:', error);
+                solutionElement.innerHTML = '<span class="error">Failed to generate solution. Please try again.</span>';
+            }
+        }
+
+        async function sendToLLM(challenge, technology) {
+            const payload = `Challenge: ${challenge}. Technology: ${technology}`;
+            console.log("Payload being sent to LLM:", payload); // Debugging
+
+            const response = await fetch(LLM_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Apikey': `Api-Key ${LLM_API_KEY}`
+                },
+                body: JSON.stringify({ payload })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to generate solution');
+            }
+
+            const data = await response.json();
+            console.log("Response from LLM:", data); // Debugging
+            return data.text || "No solution generated.";
+        }
+    </script>
+</body>
+</html>
